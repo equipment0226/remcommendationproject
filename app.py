@@ -1,6 +1,7 @@
 from datetime import datetime
 import os
 import re
+from urllib.parse import urlparse
 
 import pymysql
 from dotenv import load_dotenv
@@ -20,13 +21,23 @@ def handle_unexpected_error(error):
 
 
 def get_connection():
-    # Railway MySQL plugin uses MYSQLHOST/MYSQLUSER/... naming convention.
-    # Fall back to DB_HOST/DB_USER/... for local / custom env vars.
-    host = os.getenv("MYSQLHOST") or os.getenv("DB_HOST", "127.0.0.1")
-    user = os.getenv("MYSQLUSER") or os.getenv("DB_USER", "root")
-    password = os.getenv("MYSQLPASSWORD") or os.getenv("DB_PASSWORD", "1234")
-    database = os.getenv("MYSQLDATABASE") or os.getenv("DB_NAME", "test")
-    port = int(os.getenv("MYSQLPORT") or os.getenv("DB_PORT", 3306))
+    # 1순위: DATABASE_URL (Railway가 자동 제공하는 단일 연결 문자열)
+    db_url = os.getenv("DATABASE_URL") or os.getenv("MYSQL_URL")
+    if db_url:
+        parsed = urlparse(db_url)
+        host = parsed.hostname
+        user = parsed.username
+        password = parsed.password
+        database = parsed.path.lstrip("/")
+        port = parsed.port or 3306
+    else:
+        # 2순위: Railway MySQL 플러그인 개별 변수
+        # 3순위: 커스텀 DB_* 변수 (로컬/직접 설정)
+        host = os.getenv("MYSQLHOST") or os.getenv("DB_HOST", "127.0.0.1")
+        user = os.getenv("MYSQLUSER") or os.getenv("DB_USER", "root")
+        password = os.getenv("MYSQLPASSWORD") or os.getenv("DB_PASSWORD", "1234")
+        database = os.getenv("MYSQLDATABASE") or os.getenv("DB_NAME", "test")
+        port = int(os.getenv("MYSQLPORT") or os.getenv("DB_PORT", 3306))
     return pymysql.connect(
         host=host,
         user=user,
