@@ -8,7 +8,8 @@ from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
-load_dotenv()
+load_dotenv()                    # .env (로컬)
+load_dotenv(".env.example")      # .env.example (Railway 배포 파일)
 
 app = Flask(__name__)
 CORS(app)
