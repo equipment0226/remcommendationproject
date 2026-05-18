@@ -20,11 +20,19 @@ def handle_unexpected_error(error):
 
 
 def get_connection():
+    # Railway MySQL plugin uses MYSQLHOST/MYSQLUSER/... naming convention.
+    # Fall back to DB_HOST/DB_USER/... for local / custom env vars.
+    host = os.getenv("MYSQLHOST") or os.getenv("DB_HOST", "127.0.0.1")
+    user = os.getenv("MYSQLUSER") or os.getenv("DB_USER", "root")
+    password = os.getenv("MYSQLPASSWORD") or os.getenv("DB_PASSWORD", "1234")
+    database = os.getenv("MYSQLDATABASE") or os.getenv("DB_NAME", "test")
+    port = int(os.getenv("MYSQLPORT") or os.getenv("DB_PORT", 3306))
     return pymysql.connect(
-        host=os.getenv("DB_HOST", "127.0.0.1"),
-        user=os.getenv("DB_USER", "root"),
-        password=os.getenv("DB_PASSWORD", "1234"),
-        database=os.getenv("DB_NAME", "test"),
+        host=host,
+        user=user,
+        password=password,
+        database=database,
+        port=port,
         cursorclass=pymysql.cursors.DictCursor,
         charset="utf8mb4",
         autocommit=True,
